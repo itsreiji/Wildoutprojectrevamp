@@ -83,6 +83,7 @@ export interface SiteSettings {
     facebook: string;
     youtube: string;
   };
+  showTeam?: boolean;
 }
 
 export interface ContentContextType {

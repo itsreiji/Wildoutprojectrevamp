@@ -106,7 +106,7 @@ describe('Schemas Validation', () => {
   });
 
   describe('SettingsSchema', () => {
-    it('should validate valid settings data', () => {
+    it('should validate valid settings data and default showTeam to true', () => {
       const validSettings = {
         siteName: 'WildOut!',
         siteDescription: 'Media Digital Nightlife & Event Multi-Platform',
@@ -122,6 +122,31 @@ describe('Schemas Validation', () => {
       };
       const result = SettingsSchema.safeParse(validSettings);
       expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.showTeam).toBe(true);
+      }
+    });
+
+    it('should validate settings with showTeam specified', () => {
+      const validSettings = {
+        siteName: 'WildOut!',
+        siteDescription: 'Media Digital Nightlife & Event Multi-Platform',
+        tagline: "Indonesia's premier creative community platform",
+        email: 'contact@wildoutproject.com',
+        address: 'Jakarta, Indonesia',
+        socialMedia: {
+          instagram: 'https://instagram.com/wildoutproject.com',
+          twitter: 'https://twitter.com/wildout_id',
+          facebook: 'https://facebook.com/wildoutproject.com',
+          youtube: 'https://youtube.com/@wildout',
+        },
+        showTeam: false,
+      };
+      const result = SettingsSchema.safeParse(validSettings);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.showTeam).toBe(false);
+      }
     });
 
     it('should fail if siteName is empty', () => {

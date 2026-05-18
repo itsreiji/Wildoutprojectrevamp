@@ -333,4 +333,5 @@ export const INITIAL_SETTINGS: SiteSettings = {
     facebook: 'https://facebook.com/wildoutproject.com',
     youtube: 'https://youtube.com/@wildout',
   },
+  showTeam: true,
 };

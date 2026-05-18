@@ -115,7 +115,7 @@ export const DashboardLayout = React.memo(
             x: isMobile ? (sidebarOpen ? 0 : -320) : 0,
           }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed top-0 left-0 h-full w-72 bg-black/40 backdrop-blur-2xl border-r border-white/5 z-50 lg:translate-x-0 flex flex-col"
+          className="fixed top-0 left-0 h-full w-80 bg-black/40 backdrop-blur-2xl border-r border-white/5 z-50 lg:translate-x-0 flex flex-col"
         >
           {/* Header */}
           <div className="h-24 px-8 flex items-center justify-between border-b border-white/5">
@@ -215,7 +215,7 @@ export const DashboardLayout = React.memo(
 
         {/* Main Content */}
         <main
-          className={`relative min-h-screen transition-all duration-300 lg:ml-72 flex flex-col z-10`}
+          className={`relative min-h-screen transition-all duration-300 lg:ml-80 flex flex-col z-10`}
         >
           {/* Mobile Header */}
           <div className="lg:hidden h-20 px-8 flex items-center justify-between border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30">

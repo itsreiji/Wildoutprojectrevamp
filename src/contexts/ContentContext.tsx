@@ -142,7 +142,12 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       if (fetchedSettings !== null && fetchedSettings !== undefined) {
         console.log("✅ Settings data received");
-        setSettings(fetchedSettings);
+        const localShowTeamStr = localStorage.getItem('showTeam');
+        const showTeamFallback = localShowTeamStr !== null ? localShowTeamStr !== 'false' : true;
+        setSettings({
+          ...fetchedSettings,
+          showTeam: fetchedSettings.showTeam !== undefined ? fetchedSettings.showTeam : showTeamFallback
+        });
       } else {
         console.log("⚠️ Settings not found, keeping default");
       }
@@ -311,6 +316,9 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const updateSettingsContent = useCallback(async (settingsData: SiteSettings) => {
     const oldSettings = {...settingsRef.current}; // Store old state for rollback using ref
     try {
+      if (settingsData.showTeam !== undefined) {
+        localStorage.setItem('showTeam', settingsData.showTeam.toString());
+      }
       setSettings(settingsData);
       await apiClient.updateSettings(settingsData);
       console.log("✅ Settings saved to Supabase successfully");

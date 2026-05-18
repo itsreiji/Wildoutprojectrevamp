@@ -5,7 +5,12 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useContent } from '../contexts/ContentContextCore';
 
 export const TeamSection = React.memo(() => {
-  const { team } = useContent();
+  const { team, settings } = useContent();
+  
+  if (settings.showTeam === false) {
+    return null;
+  }
+
   const activeTeam = team.filter(member => member.status === 'active');
 
   return (

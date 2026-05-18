@@ -78,6 +78,7 @@ export const SettingsSchema = z.object({
     facebook: z.string(),
     youtube: z.string(),
   }),
+  showTeam: z.boolean().optional().default(true),
 });
 
 export const GalleryImageSchema = z.object({

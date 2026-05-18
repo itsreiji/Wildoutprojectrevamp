@@ -6,20 +6,26 @@ import { useRouter } from './Router';
 import { Link } from './router/Link';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ui/theme-toggle';
+import { useContent } from '../contexts/ContentContextCore';
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', href: '/', hash: '#' },
-  { id: 'events', label: 'Events', href: '/events' },
-  { id: 'about', label: 'About', href: '/', hash: '#about-section' },
-  { id: 'team', label: 'Team', href: '/', hash: '#team-section' },
-  { id: 'gallery', label: 'Gallery', href: '/', hash: '#gallery-section' },
-  { id: 'partners', label: 'Partners', href: '/', hash: '#partners-section' },
+  { id: 'events', label: 'Events', href: '/', hash: '#events' },
+  { id: 'about', label: 'About', href: '/', hash: '#about' },
+  { id: 'team', label: 'Team', href: '/', hash: '#team' },
+  { id: 'gallery', label: 'Gallery', href: '/', hash: '#gallery' },
+  { id: 'partners', label: 'Partners', href: '/', hash: '#partners' },
 ];
 
 const NavigationComponent = () => {
   const { getAdminPath, currentPath, navigate } = useRouter();
+  const { settings } = useContent();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const filteredNavItems = NAV_ITEMS.filter(
+    (item) => item.id !== 'team' || settings.showTeam !== false
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -90,7 +96,7 @@ const NavigationComponent = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
-              {NAV_ITEMS.map((item) => (
+              {filteredNavItems.map((item) => (
                 <Button
                   key={item.id}
                   className="text-white/80 hover:text-white hover:bg-white/10"
@@ -177,7 +183,7 @@ const NavigationComponent = () => {
                 {/* Navigation Links */}
                 <nav className="flex-1 overflow-y-auto p-6">
                   <div className="space-y-2">
-                    {NAV_ITEMS.map((item, index) => (
+                    {filteredNavItems.map((item, index) => (
                       <motion.div
                         key={item.id}
                         animate={{ opacity: 1, x: 0 }}

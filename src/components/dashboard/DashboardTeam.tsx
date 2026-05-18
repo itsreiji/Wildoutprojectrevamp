@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Search, Edit, Trash2, Mail, Instagram as LucideInstagram, Shield } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Mail, Instagram as LucideInstagram, Shield, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { ImageUpload } from './ImageUpload';
 
 export const DashboardTeam = React.memo(() => {
-  const { team, updateTeam, refresh } = useContent();
+  const { team, updateTeam, refresh, settings, updateSettings } = useContent();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -25,10 +25,12 @@ export const DashboardTeam = React.memo(() => {
     instagram: '',
     bio: '',
     photoUrl: '',
+    status: 'active' as 'active' | 'inactive',
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   // Auto-refresh data when component mounts
   useEffect(() => {
@@ -51,7 +53,7 @@ export const DashboardTeam = React.memo(() => {
 
   const handleCreate = () => {
     setEditingMember(null);
-    setFormData({ id: '', name: '', role: '', email: '', instagram: '', bio: '', photoUrl: '' });
+    setFormData({ id: '', name: '', role: '', email: '', instagram: '', bio: '', photoUrl: '', status: 'active' });
     setIsDialogOpen(true);
   };
 
@@ -65,6 +67,7 @@ export const DashboardTeam = React.memo(() => {
       instagram: member.instagram || '',
       bio: member.bio,
       photoUrl: member.photoUrl || '',
+      status: member.status,
     });
     setIsDialogOpen(true);
   };
@@ -82,6 +85,57 @@ export const DashboardTeam = React.memo(() => {
     } finally {
       setIsRefreshing(false);
       console.log("🔄 SYNC operation finished");
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    setIsToggling(true);
+    const newShowTeam = settings.showTeam !== false ? false : true;
+    console.log(`👁️ Toggling team visibility to: ${newShowTeam}`);
+    try {
+      const cleanSettings = {
+        ...settings,
+        showTeam: newShowTeam,
+        socialMedia: {
+          instagram: settings.socialMedia?.instagram || '',
+          twitter: settings.socialMedia?.twitter || '',
+          facebook: settings.socialMedia?.facebook || '',
+          youtube: settings.socialMedia?.youtube || '',
+        }
+      };
+      
+      // Save setting to localStorage fallback
+      localStorage.setItem('showTeam', newShowTeam.toString());
+      
+      await updateSettings(cleanSettings);
+      toast.success(newShowTeam ? 'Team section is now visible on the main page!' : 'Team section is now hidden from the main page!');
+    } catch (error: any) {
+      console.error('Failed to update visibility setting:', error);
+      toast.error('Failed to update visibility: ' + error.message);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  const handleToggleMemberVisibility = async (member: TeamMember) => {
+    setIsProcessing(true);
+    const newStatus = member.status === 'active' ? 'inactive' : 'active';
+    console.log(`👁️ Toggling member ${member.name} visibility status to: ${newStatus}`);
+    try {
+      const updatedTeam = team.map((m) =>
+        m.id === member.id ? { ...m, status: newStatus } : m
+      );
+      await updateTeam(updatedTeam);
+      toast.success(
+        newStatus === 'active'
+          ? `${member.name} is now visible on the main page!`
+          : `${member.name} is now hidden from the main page!`
+      );
+    } catch (error: any) {
+      console.error('Failed to toggle member visibility:', error);
+      toast.error('Failed to update visibility: ' + error.message);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -152,7 +206,6 @@ export const DashboardTeam = React.memo(() => {
         // Add new member with custom ID
         const newMember: TeamMember = {
           ...formData,
-          status: 'active',
         };
         const updatedTeam = [...team, newMember];
         console.log("📝 Local team before add:", team.length, "members");
@@ -166,7 +219,7 @@ export const DashboardTeam = React.memo(() => {
       console.log("📊 Team state after update:", team.length, "members");
 
       setIsDialogOpen(false);
-      setFormData({ id: '', name: '', role: '', email: '', instagram: '', bio: '', photoUrl: '' });
+      setFormData({ id: '', name: '', role: '', email: '', instagram: '', bio: '', photoUrl: '', status: 'active' });
       setEditingMember(null);
     } catch (error: any) {
       console.error('❌ Error saving team member:', error);
@@ -220,6 +273,65 @@ export const DashboardTeam = React.memo(() => {
         </div>
       </div>
 
+      {/* Visibility Control Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md hover:border-[#E93370]/30 transition-all duration-300"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl border transition-all ${
+              settings.showTeam !== false 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
+                : 'bg-white/5 border-white/10 text-white/40'
+            }`}>
+              {settings.showTeam !== false ? <Eye size={24} /> : <EyeOff size={24} />}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white tracking-wide">Main Page Visibility</h3>
+              <p className="text-white/40 text-xs">
+                {settings.showTeam !== false 
+                  ? 'The Team section is currently VISIBLE on the landing page.' 
+                  : 'The Team section is currently HIDDEN from the landing page.'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleVisibility}
+              disabled={isToggling}
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all flex items-center gap-2 border h-11 ${
+                settings.showTeam !== false
+                  ? 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                  : 'bg-[#E93370] hover:bg-[#D61E5C] text-white border-white/10 shadow-[0_0_20px_-5px_#E93370]'
+              }`}
+            >
+              {isToggling ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  SAVING...
+                </>
+              ) : settings.showTeam !== false ? (
+                <>
+                  <EyeOff size={16} />
+                  HIDE CONTENT
+                </>
+              ) : (
+                <>
+                  <Eye size={16} />
+                  SHOW CONTENT
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Team Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <AnimatePresence>
@@ -232,28 +344,55 @@ export const DashboardTeam = React.memo(() => {
               transition={{ delay: index * 0.05 }}
               className="group relative bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.07]"
             >
-               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+               <div className="absolute top-4 right-4 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                     onClick={() => handleToggleMemberVisibility(member)}
+                     className={`p-2 hover:bg-white/10 rounded-lg transition-colors ${
+                       member.status === 'active' 
+                         ? 'text-emerald-400' 
+                         : 'text-white/40 hover:text-white'
+                     }`}
+                     title={member.status === 'active' ? 'Hide from main page' : 'Show on main page'}
+                  >
+                     {member.status === 'active' ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
                   <button 
                      onClick={() => handleEdit(member)}
                      className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                     title="Edit profile"
                   >
                      <Edit size={16} />
                   </button>
                   <button 
                      onClick={() => handleDelete(member.id)}
                      className="p-2 hover:bg-red-500/20 rounded-lg text-white/60 hover:text-red-500 transition-colors"
+                     title="Delete member"
                   >
                      <Trash2 size={16} />
                   </button>
                </div>
 
                <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#E93370]/20 group-hover:border-[#E93370] transition-colors mb-4 bg-black/50">
+                  <div className={`w-24 h-24 rounded-full overflow-hidden border-2 transition-all duration-300 mb-4 bg-black/50 ${
+                     member.status === 'active'
+                       ? 'border-[#E93370]/20 group-hover:border-[#E93370]'
+                       : 'border-white/10 opacity-40 grayscale group-hover:opacity-60 group-hover:grayscale-0'
+                  }`}>
                      <ImageWithFallback
                         src={member.photoUrl}
                         alt={member.name}
                         className="w-full h-full object-cover"
                      />
+                  </div>
+                  
+                  <div className="flex justify-center mb-1">
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                      member.status === 'active'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
+                        : 'bg-white/5 text-white/30 border border-white/10'
+                    }`}>
+                      {member.status === 'active' ? 'Visible' : 'Hidden'}
+                    </span>
                   </div>
                   
                   <h3 className="text-xl font-bold text-white mb-1">{member.name}</h3>
@@ -364,6 +503,18 @@ export const DashboardTeam = React.memo(() => {
                         placeholder="@username"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[9px] uppercase text-[#E93370] font-black tracking-[0.4em] ml-1">Visibility Status</Label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                      className="w-full bg-white/[0.03] border border-white/5 text-white focus:border-[#E93370]/50 focus:bg-white/[0.07] h-11 text-sm px-4 rounded-lg transition-all focus:outline-none"
+                    >
+                      <option value="active" className="bg-black text-white">VISIBLE (Active)</option>
+                      <option value="inactive" className="bg-black text-white">HIDDEN (Inactive)</option>
+                    </select>
                   </div>
                 </div>
 
